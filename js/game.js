@@ -41,14 +41,25 @@ stoneImage.onload = function(){
   stoneReady = true;  
 }
 stoneImage.src = "images/stone.png"
+//Monster image
+var monsterReady = false;
+var monsterImage = new Image();
+monsterImage.onload = function(){
+  monsterReady = true;  
+}
+monsterImage.src = "images/monster.png"
 // Game objects
 var hero = {
 	speed: 256 // movement in pixels per second
+};
+var monster = {
+  speed: 50 // movement in pixels per second
 };
 var princess = {};
 var princessesCaught = 0;
 var stones = [];
 var totalpiedras
+var numeroPiedras = 3;
 // Handle keyboard controls
 var keysDown = {};
 
@@ -61,37 +72,25 @@ addEventListener("keyup", function (e) {
 }, false);
 
 // Reset the game when the player catches a princess
-var CoordenadasPiedras = function(stone)
-{
-    stone.x = parseInt(32 + (Math.random() * (canvas.width - 96)));
-    stone.y = parseInt(32 + (Math.random() * (canvas.height - 96))); 
-    for (var i = 0; i < stones.length; i++) 
-    {
-      if ((stone.x + 18 >= parseInt(stones[i].x))
-         && (stone.x <= parseInt(stones[i].x + 18))
-         && (stone.y + 18 >= parseInt(stones[i].y))
-         && (stone.y <= parseInt(stones[i].y + 36)))
-      {      
-        return false;
-      }
-       if((stone.x >= parseInt(hero.x)) && (stone.x <= parseInt(hero.x) + 32) || (stone.y >= parseInt(hero.y)) && (stone.x <= parseInt(hero.y) + 32) || (stone.x <= parseInt(hero.x)) && (stone.x >= parseInt(hero.x) + 32) || (stone.y <= parseInt(hero.y)) && (stone.x >= parseInt(hero.y) + 32))
-        {
-          return false;
-        }
-       if((stone.x >= parseInt(princess.x)) && (stone.x <= parseInt(princess.x) + 32) || (stone.y >= parseInt(princess.y)) && (stone.x <= parseInt(princess.y) + 32) || (stone.x <= parseInt(princess.x)) && (stone.x >= parseInt(princess.x) + 32) || (stone.y <= parseInt(princess.y)) && (stone.x >= parseInt(princess.y) + 32))
-      {
-        return false;
-      }
-      
-      
-    }
-    return stone;
-}
+
 var reset = function () {
 	hero.x = canvas.width / 2;
 	hero.y = canvas.height / 2;
-  totalpiedras = (Math.random()* 10);
-  for (var i = 0; i < totalpiedras; i++) 
+  var Aparecer = parseInt(Math.random() * 4);
+  if(Aparecer == 2 || Aparecer == 3)
+  {
+    monster.x = 32 + (Math.random() * (canvas.width - 96));
+    monster.y = 32;
+  }
+  else{
+    monster.x = 32;
+    monster.y = 32 + (Math.random() * (canvas.width - 96));
+  }
+  stones = [];
+	// Throw the princess somewhere on the screen randomly
+	princess.x = 32 + (Math.random() * (canvas.width - 96));
+	princess.y = 32 + (Math.random() * (canvas.height - 96));
+  for (var i = 0; i < numeroPiedras; i++) 
   {
     var stone = {};
     do
@@ -100,34 +99,168 @@ var reset = function () {
     }while(piedra == false)
     stones[i] = piedra;
   }
-	// Throw the princess somewhere on the screen randomly
-	princess.x = 32 + (Math.random() * (canvas.width - 96));
-	princess.y = 32 + (Math.random() * (canvas.height - 96));
 };
+var CoordenadasPiedras = function(stone)
+{
+    stone.x = parseInt(32 + (Math.random() * (canvas.width - 96)));
+    stone.y = parseInt(32 + (Math.random() * (canvas.height - 96))); 
 
+    
+    for (var i = 0; i < stones.length; i++) 
+    {
+      if(stone.x <= (stones[i].x + 32)
+         && stones[i].x <= (stone.x + 32)
+         && stone.y <= (stones[i].y + 32)
+		     && stones[i].y <= (stone.y + 32))
+      {      
+        return false;
+      }       
+    }
+    if(stone.x <= parseInt(hero.x + 32)
+         && parseInt(hero.x) <= (stone.x + 32)
+  	     && stone.y <= parseInt(hero.y + 32)
+		     && parseInt(hero.y) <= (stone.y + 32))
+        {
+          return false;
+    }
+    if(
+            stone.x <= parseInt(princess.x + 32)
+         && parseInt(princess.x) <= (stone.x + 32)
+		     && stone.y <= parseInt(princess.y + 32)
+		     && parseInt(princess.y) <= (stone.y + 32))
+      {
+        return false;
+      }
+      if(
+            stone.x <= parseInt(monster.x + 32)
+         && parseInt(monster.x) <= (monster.x + 32)
+  	     && stone.y <= parseInt(princess.y + 32)
+		     && parseInt(monster.y) <= (monster.y + 32))
+      {
+        return false;
+      }
+    return stone;
+}
+var colision = function ()
+{
+  for (var i = 0; i < stones.length; i++) 
+    {
+      if(stones[i].x <= parseInt(hero.x + 28)
+         && parseInt(hero.x) <= (stones[i].x + 28)
+  	     && stones[i].y <= parseInt(hero.y + 28)
+		     && parseInt(hero.y) <= (stones[i].y + 28))
+        {
+          return true;
+        }
+    }  
+  return false;
+}
+var colisionMonster = function ()
+{
+  for (var i = 0; i < stones.length; i++) 
+    {
+      if(stones[i].x <= parseInt(monster.x + 28)
+         && parseInt(monster.x) <= (stones[i].x + 28)
+         && stones[i].y <= parseInt(monster.y + 28)
+		     && parseInt(monster.y) <= (stones[i].y + 28))
+        {
+          return true;
+        }
+    }  
+  return false;
+}
+var movimientomonster = function(modifier)
+{
+  restax = parseInt(monster.x - hero.x);
+  restay = parseInt(monster.y - hero.y);
+  if(restax > 0)
+  {
+    monster.x -= monster.speed * modifier;
+    if(colisionMonster())
+      {
+        monster.x += monster.speed * modifier;
+      }  
+  }
+  if(restay > 0)
+  {
+    monster.y -= monster.speed * modifier;
+    if(colisionMonster())
+      {
+        monster.y += monster.speed * modifier;
+      } 
+  }
+    if(restax < 0)
+  {
+    monster.x += monster.speed * modifier;
+    if(colisionMonster())
+      {
+        monster.x -= monster.speed * modifier;
+      }  
+  }
+  if(restay < 0)
+  {
+    monster.y += monster.speed * modifier;
+    if(colisionMonster())
+      {
+        monster.y -= monster.speed * modifier;
+      } 
+  }
+}
 // Update game objects
 var update = function (modifier) {
-	if (38 in keysDown && hero.y > 32) { // Player holding up
-		hero.y -= hero.speed * modifier;
+    movimientomonster(modifier);
+    if (38 in keysDown && hero.y > 32 ) { // Player holding up
+  	  hero.y -= hero.speed * modifier;
+      if(colision())
+      {
+        hero.y += hero.speed * modifier;
+      }    
 	}
-	if (40 in keysDown && hero.y < (canvas.height - 64)) { // Player holding down
+	if (40 in keysDown && hero.y < (canvas.height - 64) ) { // Player holding down
 		hero.y += hero.speed * modifier;
-	}
-	if (37 in keysDown && hero.x > 32) { // Player holding left
+    if(colision())
+      {
+        hero.y -= hero.speed * modifier;
+      }
+    }
+	if (37 in keysDown && hero.x > 32 ) { // Player holding left
 		hero.x -= hero.speed * modifier;
+    if(colision())
+      {
+        hero.x += hero.speed * modifier;
+      }
 	}
 	if (39 in keysDown && hero.x < (canvas.width - 64)) { // Player holding right
 		hero.x += hero.speed * modifier;
+    if(colision())
+      {
+        hero.x -= hero.speed * modifier;
+      }
 	}
-
 	// Are they touching?
 	if (
-		hero.x <= (princess.x + 16)
-		&& princess.x <= (hero.x + 16)
-		&& hero.y <= (princess.y + 16)
-		&& princess.y <= (hero.y + 32)
+		hero.x <= (princess.x + 25)
+		&& princess.x <= (hero.x + 25)
+		&& hero.y <= (princess.y + 25)
+		&& princess.y <= (hero.y + 25)
 	) {
 		++princessesCaught;
+    if (princessesCaught%10 == 0)
+    {
+      numeroPiedras = numeroPiedras + 3;
+      monster.speed = monster.speed + 20;
+    }
+		reset();
+	}
+    if (
+		hero.x <= (monster.x + 25)
+		&& monster.x <= (hero.x + 25)
+		&& hero.y <= (monster.y + 25)
+		&& monster.y <= (hero.y + 25)
+	) {
+		princessesCaught = 0;
+    numeroPiedras = 3;
+    monster.speed = 50;
 		reset();
 	}
 };
@@ -137,11 +270,7 @@ var render = function () {
 	if (bgReady) {
 		ctx.drawImage(bgImage, 0, 0);
 	}
-  if (stoneReady) {
-    for (var i = 0; i < totalpiedras; i++) 
-  {
-    ctx.drawImage(stoneImage, stones[i].x, stones[i].y);
-  }
+
 	if (heroReady) {
 		ctx.drawImage(heroImage, hero.x, hero.y);
 	}
@@ -149,7 +278,14 @@ var render = function () {
 	if (princessReady) {
 		ctx.drawImage(princessImage, princess.x, princess.y);
 	}
-
+    if (monsterReady) {
+		ctx.drawImage(monsterImage, monster.x, monster.y);
+	}
+    if (stoneReady) {
+    for (var i = 0; i < numeroPiedras; i++) 
+  {
+    ctx.drawImage(stoneImage, stones[i].x, stones[i].y);
+  }
 	}
 	// Score
 	ctx.fillStyle = "rgb(250, 250, 250)";
